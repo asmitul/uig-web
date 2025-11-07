@@ -4,6 +4,12 @@ import './App.css';
 function App() {
   const [query, setQuery] = useState('');
   const [words, setWords] = useState([]);
+  const [newUyghur, setNewUyghur] = useState('');
+  const [newEnglish, setNewEnglish] = useState('');
+  const [newTurkish, setNewTurkish] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState('');
 
   useEffect(() => {
     fetch('https://api.uig.me/api/v1/words')
@@ -33,6 +39,54 @@ function App() {
     });
   }, [query, words]);
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitError('');
+    setSubmitSuccess('');
+
+    const trimmedUyghur = newUyghur.trim();
+    const trimmedEnglish = newEnglish.trim();
+    const trimmedTurkish = newTurkish.trim();
+
+    if (!trimmedUyghur || !trimmedEnglish || !trimmedTurkish) {
+      setSubmitError('Please fill in all fields before submitting.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('https://api.uig.me/api/v1/words', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          word_uyghur: trimmedUyghur,
+          word_english: trimmedEnglish,
+          word_turkish: trimmedTurkish,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const createdWord = await response.json();
+
+      setWords((previousWords) => [createdWord, ...previousWords]);
+      setSubmitSuccess('Word added successfully!');
+      setNewUyghur('');
+      setNewEnglish('');
+      setNewTurkish('');
+    } catch (error) {
+      console.error('Failed to add word:', error);
+      setSubmitError('Failed to add the word. Please try again later.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="App">
       <main className="dictionary">
@@ -45,6 +99,51 @@ function App() {
           onChange={(event) => setQuery(event.target.value)}
           autoFocus
         />
+        <section className="form-section" aria-live="polite">
+          <h2 className="section-title">Add a new word</h2>
+          <form className="word-form" onSubmit={handleSubmit}>
+            <div className="form-grid">
+              <label className="form-field">
+                <span className="form-label">Uyghur</span>
+                <input
+                  type="text"
+                  value={newUyghur}
+                  onChange={(event) => setNewUyghur(event.target.value)}
+                  placeholder="Uyghur word"
+                  disabled={isSubmitting}
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span className="form-label">English</span>
+                <input
+                  type="text"
+                  value={newEnglish}
+                  onChange={(event) => setNewEnglish(event.target.value)}
+                  placeholder="English translation"
+                  disabled={isSubmitting}
+                  required
+                />
+              </label>
+              <label className="form-field">
+                <span className="form-label">Turkish</span>
+                <input
+                  type="text"
+                  value={newTurkish}
+                  onChange={(event) => setNewTurkish(event.target.value)}
+                  placeholder="Turkish translation"
+                  disabled={isSubmitting}
+                  required
+                />
+              </label>
+            </div>
+            <button type="submit" className="submit-button" disabled={isSubmitting}>
+              {isSubmitting ? 'Adding…' : 'Add word'}
+            </button>
+          </form>
+          {submitError && <p className="form-feedback error">{submitError}</p>}
+          {submitSuccess && <p className="form-feedback success">{submitSuccess}</p>}
+        </section>
         <ul className="results" aria-live="polite">
           {filteredEntries.length === 0 ? (
             <li className="empty">No matches found.</li>
