@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
+import mockDictionary from './data/mockDictionary.json';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -12,14 +13,30 @@ function App() {
   const [submitSuccess, setSubmitSuccess] = useState('');
 
   useEffect(() => {
-    fetch('https://api.uig.me/api/v1/words')
-      .then((response) => response.json())
-      .then((data) => {
-        setWords(data);
-      })
-      .catch((error) => {
+    let isMounted = true;
+
+    const loadWords = async () => {
+      try {
+        const response = await fetch('https://api.uig.me/api/v1/words');
+        const data = await response.json();
+
+        if (isMounted) {
+          setWords(data);
+        }
+      } catch (error) {
         console.error('Failed to fetch words:', error);
-      });
+
+        if (isMounted) {
+          setWords(mockDictionary);
+        }
+      }
+    };
+
+    loadWords();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredEntries = useMemo(() => {
@@ -69,7 +86,19 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`Request failed with status ${response.status}`);
+        let errorMessage = 'Failed to add the word. Please try again later.';
+
+        try {
+          const errorBody = await response.json();
+          if (typeof errorBody?.detail === 'string') {
+            errorMessage = errorBody.detail;
+          }
+        } catch {
+          // Ignore JSON parsing errors and fall back to the default message.
+        }
+
+        setSubmitError(errorMessage);
+        return;
       }
 
       const createdWord = await response.json();
@@ -81,7 +110,30 @@ function App() {
       setNewTurkish('');
     } catch (error) {
       console.error('Failed to add word:', error);
-      setSubmitError('Failed to add the word. Please try again later.');
+
+      const isNetworkError =
+        error instanceof TypeError ||
+        (typeof error.message === 'string' &&
+          (error.message.includes('Failed to fetch') ||
+            error.message.includes('NetworkError')));
+
+      if (isNetworkError) {
+        const fallbackWord = {
+          id: Date.now(),
+          word_uyghur: trimmedUyghur,
+          word_english: trimmedEnglish,
+          word_turkish: trimmedTurkish,
+          pronunciation_url: '',
+        };
+
+        setWords((previousWords) => [fallbackWord, ...previousWords]);
+        setSubmitSuccess('Word added successfully! (saved locally)');
+        setNewUyghur('');
+        setNewEnglish('');
+        setNewTurkish('');
+      } else {
+        setSubmitError('Failed to add the word. Please try again later.');
+      }
     } finally {
       setIsSubmitting(false);
     }
