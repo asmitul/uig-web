@@ -147,8 +147,10 @@ export const useWordSearch = (
       return;
     }
 
-    void setSize(1);
-  }, [debouncedQuery, mutate, setSize, shouldFetch]);
+    if (size !== 1) {
+      void setSize(1);
+    }
+  }, [debouncedQuery, mutate, setSize, shouldFetch, size]);
 
   const words = useMemo(() => {
     if (!data) {
