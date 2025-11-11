@@ -54,7 +54,7 @@ const buildCmsSearchUrl = ({
   page,
   limit,
 }: {
-  q?: string;
+  q: string;
   page: number;
   limit: number;
 }): string => {
@@ -64,9 +64,11 @@ const buildCmsSearchUrl = ({
     limit: String(limit),
   });
 
-  if (q) {
-    params.set("search", q);
-  }
+  const searchableFields = ["word_uyghur", "word_english", "word_turkish"];
+
+  searchableFields.forEach((field, index) => {
+    params.set(`where[or][${index}][${field}][contains]`, q);
+  });
 
   url.search = params.toString();
   return url.toString();
