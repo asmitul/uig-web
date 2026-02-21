@@ -17,6 +17,7 @@ type ErrorResponse = { error: string };
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
 const DEFAULT_CMS_BASE_URL = "https://admin.uig.me";
+const CMS_REQUEST_TIMEOUT_MS = 8000;
 
 const getCmsBaseUrl = (): string => {
   const candidate =
@@ -113,12 +114,17 @@ export default async function handler(
 
   try {
     const cmsUrl = buildCmsSearchUrl({ q: searchTerm, page, limit });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CMS_REQUEST_TIMEOUT_MS);
     const cmsResponse = await fetch(cmsUrl, {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
       next: { revalidate: 0 },
+      signal: controller.signal,
+    }).finally(() => {
+      clearTimeout(timeoutId);
     });
 
     if (!cmsResponse.ok) {
@@ -131,6 +137,13 @@ export default async function handler(
     const payload = (await cmsResponse.json()) as PayloadSearchResponse;
     response.status(200).json(normalizeResponse(payload));
   } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      response
+        .status(504)
+        .json({ error: `CMS request timed out after ${CMS_REQUEST_TIMEOUT_MS}ms` });
+      return;
+    }
+
     console.error("Failed to fetch words from CMS", error);
     response.status(500).json({ error: "Failed to fetch words from CMS" });
   }
