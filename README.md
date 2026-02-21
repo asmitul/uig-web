@@ -69,10 +69,10 @@ Audio playback is handled via `resolvePronunciationUrl` in `src/pages/index.tsx:
 | `pnpm start`  | Serves the `.next` output (simulate production).                        |
 | `pnpm lint`   | Runs ESLint 9 with the Next config.                                     |
 
-API routes live under `src/pages/api`. You can confirm the boilerplate endpoint after `pnpm dev` with:
+API routes live under `src/pages/api`. You can confirm dictionary search after `pnpm dev` with:
 
 ```bash
-curl http://localhost:3000/api/hello
+curl "http://localhost:3000/api/words/search?q=test&page=1&limit=5"
 ```
 
 ---

@@ -371,7 +371,11 @@ export default function Home() {
         className={`${geistSans.className} ${geistMono.className} flex min-h-screen items-center justify-center bg-zinc-50 px-6 py-12 text-zinc-900`}
       >
         <section className="w-full max-w-2xl space-y-6">
+          <label htmlFor="word-search" className="sr-only">
+            Search Uyghur dictionary entries
+          </label>
           <input
+            id="word-search"
             type="text"
             placeholder="Search in Uyghur or English..."
             value={searchTerm}
