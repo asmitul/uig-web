@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Naskh_Arabic } from "next/font/google";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VariableSizeList, type ListChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer";
@@ -15,6 +15,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const uyghurFont = Noto_Naskh_Arabic({
+  variable: "--font-uyghur",
+  subsets: ["arabic"],
+  weight: ["400", "500", "700"],
+  display: "swap",
 });
 
 const DEFAULT_SITE_URL = "https://uig.me";
@@ -249,7 +256,11 @@ const WordRow = ({
     <div style={style}>
       <div ref={rowRef} className="border-b border-zinc-100 px-4 py-4 sm:px-6" id={`word-${word.id}`}>
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xl font-semibold leading-tight text-zinc-900 break-words sm:text-2xl">
+          <p
+            lang="ug"
+            dir="rtl"
+            className="uyghur-text flex-1 break-words text-right text-xl font-semibold leading-tight text-zinc-900 sm:text-2xl"
+          >
             {renderHighlightedText(word.word_uyghur, highlightTerm)}
           </p>
           {pronunciationUrl && (
@@ -515,7 +526,7 @@ export default function Home() {
         />
       </Head>
       <main
-        className={`${geistSans.className} ${geistMono.className} flex min-h-screen items-start justify-center bg-zinc-50 px-4 py-10 text-zinc-900 sm:px-6 sm:py-12`}
+        className={`${geistSans.className} ${geistMono.className} ${uyghurFont.variable} flex min-h-screen items-start justify-center bg-zinc-50 px-4 py-10 text-zinc-900 sm:px-6 sm:py-12`}
       >
         <section className="w-full max-w-2xl space-y-6">
           <label htmlFor="word-search" className="sr-only">

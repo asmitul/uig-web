@@ -24,3 +24,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
+
+.uyghur-text {
+  font-family: var(--font-uyghur), "Noto Naskh Arabic", "Noto Sans Arabic", "Geeza Pro", "Segoe UI", sans-serif;
+}
