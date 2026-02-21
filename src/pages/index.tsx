@@ -125,6 +125,43 @@ type WordListItemData = {
   isReachingEnd: boolean;
   loadMore: () => void;
   setRowHeight: (index: number, height: number) => void;
+  highlightTerm: string;
+};
+
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const renderHighlightedText = (text: string, query: string) => {
+  const normalizedQuery = query.trim();
+
+  if (!normalizedQuery) {
+    return text;
+  }
+
+  const pattern = new RegExp(`(${escapeRegExp(normalizedQuery)})`, "gi");
+  const segments = text.split(pattern);
+
+  if (segments.length === 1) {
+    return text;
+  }
+
+  return segments.map((segment, segmentIndex) => {
+    if (!segment) {
+      return null;
+    }
+
+    if (segmentIndex % 2 === 1) {
+      return (
+        <mark
+          key={`${segment}-${segmentIndex}`}
+          className="rounded bg-amber-200/80 px-0.5 font-semibold text-inherit"
+        >
+          {segment}
+        </mark>
+      );
+    }
+
+    return <span key={`${segment}-${segmentIndex}`}>{segment}</span>;
+  });
 };
 
 const WordRow = ({
@@ -140,6 +177,7 @@ const WordRow = ({
     isReachingEnd,
     loadMore,
     setRowHeight,
+    highlightTerm,
   } = data;
   const rowRef = useRef<HTMLDivElement | null>(null);
 
@@ -179,6 +217,7 @@ const WordRow = ({
     isReachingEnd,
     pronunciationUrl,
     setRowHeight,
+    highlightTerm,
     word?.id,
     word?.word_english,
     word?.word_turkish,
@@ -211,7 +250,7 @@ const WordRow = ({
       <div ref={rowRef} className="border-b border-zinc-100 px-4 py-4 sm:px-6" id={`word-${word.id}`}>
         <div className="flex items-start justify-between gap-3">
           <p className="text-xl font-semibold leading-tight text-zinc-900 break-words sm:text-2xl">
-            {word.word_uyghur}
+            {renderHighlightedText(word.word_uyghur, highlightTerm)}
           </p>
           {pronunciationUrl && (
             <button
@@ -247,7 +286,7 @@ const WordRow = ({
               English
             </p>
             <p className="mt-1 text-base font-medium leading-snug text-emerald-700 break-words">
-              {word.word_english}
+              {renderHighlightedText(word.word_english, highlightTerm)}
             </p>
           </div>
           {word.word_turkish && (
@@ -256,7 +295,7 @@ const WordRow = ({
                 Turkish
               </p>
               <p className="mt-1 text-base font-medium leading-snug text-zinc-700 break-words">
-                {word.word_turkish}
+                {renderHighlightedText(word.word_turkish, highlightTerm)}
               </p>
             </div>
           )}
@@ -428,6 +467,7 @@ export default function Home() {
     isReachingEnd,
     loadMore,
     setRowHeight,
+    highlightTerm: debouncedQuery.trim(),
   }), [
     words,
     activeAudioId,
@@ -436,6 +476,7 @@ export default function Home() {
     isReachingEnd,
     loadMore,
     setRowHeight,
+    debouncedQuery,
   ]);
 
   const resultLabel = `${total.toLocaleString()} result${total === 1 ? "" : "s"}`;
